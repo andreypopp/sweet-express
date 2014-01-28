@@ -85,21 +85,18 @@ macro expressApp {
         var $app = require('express');
 
         let $use = macro {
-          rule { $path:expr expressApp { $mbody $[...] } } => {
-            $app.use($path , expressApp { $mbody $[...] })
+          rule { $path:expr { $mbody $[...] } } => {
+            $app.use($path, __handler { $mbody $[...] })
           }
-//        rule { $path:expr { $mbody $[...] } } => {
-//          $app.use($path, __handler { $mbody $[...] })
-//        }
-//        rule { { $mbody $[...] } } => {
-//          $app.use(__handler { $mbody $[...] })
-//        }
-//        rule { $path:expr , $what:expr } => {
-//          $app.use($path , $what)
-//        }
-//        rule { $what:expr } => {
-//          $app.use($what)
-//        }
+          rule { { $mbody $[...] } } => {
+            $app.use(__handler { $mbody $[...] })
+          }
+          rule { $path:expr , $what:expr } => {
+            $app.use($path , $what)
+          }
+          rule { $what:expr } => {
+            $app.use($what)
+          }
         }
 
         let $get = macro {
@@ -137,7 +134,12 @@ macro expressApp {
 
 var app = expressApp {
 
-  get "/path" {
+  use {
+    header "Content-type", "application/json"
+    next
+  }
+
+  get "/users" {
     write "hello"
     write "more data"
     end
@@ -145,15 +147,15 @@ var app = expressApp {
 
   get "/users/:username" {
     db.search(~username);
-    var x = {x: 12};
+  }
+
+  put "/users/:username" {
+    db.updateUser(~username, body, function(err, updated) {
+      send updated
+    });
   }
 
   get "/search" {
     db.search(?query);
-  }
-
-  post "/x" {
-    body
-    send 404, "not found"
   }
 }
